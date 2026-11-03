@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Kiwi</title>
+<link rel="manifest" href="manifest.json">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Roboto:wght@400;500&display=swap');
 
@@ -303,6 +304,11 @@
 </div>
 
 <script>
+// РЕГИСТРАЦИЯ SERVICE WORKER ДЛЯ УСТАНОВКИ ПРИЛОЖЕНИЯ
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
 const WORKER_URL = 'https://swift-skunk-2632.blogmix.deno.net';
 
 const chat = document.getElementById('chat');
