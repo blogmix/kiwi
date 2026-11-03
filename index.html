@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мой ИИ</title>
+<style>
+  body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; display: flex; flex-direction: column; height: 90vh; }
+  #chat { background: white; border-radius: 12px; padding: 15px; flex: 1; overflow-y: auto; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
+  .msg { margin: 8px 0; padding: 10px 14px; border-radius: 15px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; }
+  .user { background: #0084ff; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+  .bot { background: #e4e6eb; color: black; margin-right: auto; border-bottom-left-radius: 4px; }
+  .input-row { display: flex; gap: 8px; }
+  input { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; outline: none; }
+  button { padding: 14px 20px; background: #0084ff; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="chat"></div>
+<div class="input-row">
+  <input id="inp" placeholder="Спроси что-нибудь..." autocomplete="off">
+  <button onclick="send()">➤</button>
+</div>
+
+<script>
+// НОВЫЙ АДРЕС СЕРВЕРА DENO
+const WORKER_URL = 'https://swift-skunk-2632.blogmix.deno.net';
+
+const chat = document.getElementById('chat');
+const inp = document.getElementById('inp');
+
+function addMsg(text, cls) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + cls;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function send() {
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  addMsg(text, 'user');
+
+  const thinkingDiv = document.createElement('div');
+  thinkingDiv.className = 'msg bot';
+  thinkingDiv.textContent = 'Печатает...';
+  chat.appendChild(thinkingDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    // ОТПРАВЛЯЕМ В ФОРМАТЕ, КОТОРЫЙ ЖДЁТ DENO
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text }) 
+    });
+
+    const data = await res.json();
+    chat.removeChild(thinkingDiv);
+
+    if (data.error) {
+        // Показываем ошибку от Google или сервера
+        const errorMsg = typeof data.error === 'string' ? data.error : (data.error.message || 'Неизвестная ошибка');
+        addMsg('Ошибка: ' + errorMsg, 'bot');
+    } else {
+        const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Не смог ответить.';
+        addMsg(answer, 'bot');
+    }
+  } catch (e) {
+    chat.removeChild(thinkingDiv);
+    addMsg('Ошибка сети. Проверь интернет.', 'bot');
+  }
+}
+
+inp.addEventListener('keypress', e => { if (e.key === 'Enter') send(); });
+addMsg('Привет! Я готов отвечать.', 'bot');
+</script>
+</body>
+</html>
